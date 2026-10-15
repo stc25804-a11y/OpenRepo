@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER CARD SUITE - Powered by Paudel Bijaya</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tone.js for Sound Effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Noto+Sans+JP:wght@400;700;900&display=swap');
+
+        body {
+            font-family: 'Orbitron', 'Noto Sans JP', sans-serif;
+            background-color: #070711;
+            color: #ffffff;
+            user-select: none;
+            min-height: 100vh;
+        }
+
+        .neon-glow-cyan {
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4), inset 0 0 10px rgba(0, 240, 255, 0.2);
+            border: 1px solid #00f0ff;
+        }
+
+        .neon-glow-pink {
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.4), inset 0 0 10px rgba(255, 0, 127, 0.2);
+            border: 1px solid #ff007f;
+        }
+
+        .neon-glow-gold {
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4), inset 0 0 10px rgba(255, 215, 0, 0.2);
+            border: 1px solid #ffd700;
+        }
+
+        .neon-text-cyan {
+            text-shadow: 0 0 8px #00f0ff, 0 0 16px #00f0ff;
+        }
+
+        .neon-text-pink {
+            text-shadow: 0 0 8px #ff007f, 0 0 16px #ff007f;
+        }
+
+        .neon-text-gold {
+            text-shadow: 0 0 8px #ffd700, 0 0 16px #ffd700;
+        }
+
+        /* Card styles and flip animation */
+        .card-container {
+            perspective: 1000px;
+        }
+
+        .playing-card {
+            width: 90px;
+            height: 130px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            border-radius: 10px;
+        }
+
+        @media (min-width: 640px) {
+            .playing-card {
+                width: 110px;
+                height: 160px;
+            }
+        }
+
+        .playing-card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #181928 0%, #0d0e17 100%);
+            border: 2px solid #2d3148;
+            color: #fff;
+            transform: rotateY(180deg);
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #ff007f 0%, #7900ff 100%);
+            border: 2px solid #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cyber-btn {
+            transition: all 0.2s ease;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+
+        .cyber-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.2);
+        }
+
+        .cyber-btn:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        /* Scanlines background */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 50;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
+            background-size: 100% 4px;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen relative overflow-x-hidden">
+
+    <div class="scanlines"></div>
+
+    <!-- Background decorative grid -->
+    <div class="fixed inset-0 bg-[radial-gradient(#1f293d_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"></div>
+
+    <!-- Top Navigation / Header -->
+    <header class="relative z-10 border-b border-cyan-500/30 bg-black/60 backdrop-blur-md px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-400 to-pink-500 p-0.5 shadow-lg shadow-cyan-500/30">
+                <div class="w-full h-full bg-black rounded-[7px] flex items-center justify-center">
+                    <i class="fa-solid fa-spade text-cyan-400 text-xl"></i>
+                </div>
+            </div>
+            <div>
+                <h1 class="font-black text-lg md:text-xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-yellow-400">
+                    CYBER CARD SUITE
+                </h1>
+                <p class="text-[10px] text-cyan-400 tracking-widest font-bold">FEAT. PAUDEL BIJAYA</p>
+            </div>
+        </div>
+
+        <!-- Chips & Score Display -->
+        <div class="flex items-center gap-4">
+            <div class="bg-black/80 border border-yellow-500/50 rounded-lg px-3 py-1.5 flex items-center gap-2">
+                <i class="fa-solid fa-coins text-yellow-400 text-sm"></i>
+                <div class="flex flex-col text-right">
+                    <span class="text-[9px] text-gray-400 leading-none">CREDITS</span>
+                    <span id="player-credits" class="text-sm font-bold text-yellow-300 neon-text-gold">1,000</span>
+                </div>
+            </div>
+
+            <button id="btn-sound" class="p-2 rounded-lg border border-gray-700 bg-gray-900/80 text-gray-300 hover:text-cyan-400 hover:border-cyan-500 transition">
+                <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 relative z-10 max-w-5xl w-full mx-auto p-4 flex flex-col items-center justify-center">
+
+        <!-- GAME SELECTOR MENU (Default view) -->
+        <div id="view-menu" class="w-full space-y-6 max-w-3xl py-6">
+            <!-- Rival Banner -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-900/60 via-black to-cyan-900/60 border border-pink-500/40 p-6 shadow-2xl flex flex-col md:flex-row items-center gap-6">
+                <div class="relative">
+                    <div class="w-24 h-24 rounded-full border-2 border-pink-500 p-1 bg-black overflow-hidden shadow-lg shadow-pink-500/50">
+                        <img src="https://placehold.co/150x150/111827/00f0ff?text=PB" alt="Paudel Bijaya" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-pink-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-white">CHAMPION</span>
+                </div>
+                <div class="text-center md:text-left flex-1">
+                    <div class="text-xs text-pink-400 font-bold uppercase tracking-widest mb-1"><i class="fa-solid fa-crown mr-1"></i> Special Rival Dealer</div>
+                    <h2 class="text-2xl font-black text-white mb-1">Paudel Bijaya</h2>
+                    <p class="text-xs text-gray-300 leading-relaxed">「サイバーカジノへようこそ！ポーカー、ブラックジャック、ハイ＆ローで勝負しよう。準備はいいか？」</p>
+                </div>
+            </div>
+
+            <!-- Mode Buttons -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- High & Low Card -->
+                <div onclick="selectGame('highlow')" class="cursor-pointer group relative bg-gray-900/80 hover:bg-gray-800 border border-cyan-500/40 hover:border-cyan-400 rounded-xl p-5 transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-cyan-500/20">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-12 h-12 rounded-lg bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center text-cyan-400 text-2xl group-hover:scale-110 transition">
+                            <i class="fa-solid fa-arrows-up-down"></i>
+                        </div>
+                        <span class="text-xs bg-cyan-950 text-cyan-300 px-2 py-1 rounded border border-cyan-800">EASY</span>
+                    </div>
+                    <h3 class="font-bold text-lg text-white mb-1 group-hover:text-cyan-300">ハイ＆ロー</h3>
+                    <p class="text-xs text-gray-400">次のカードが伏せカードより大きいか小さいかを予測！連勝で報酬倍増。</p>
+                </div>
+
+                <!-- Blackjack Card -->
+                <div onclick="selectGame('blackjack')" class="cursor-pointer group relative bg-gray-900/80 hover:bg-gray-800 border border-pink-500/40 hover:border-pink-400 rounded-xl p-5 transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-pink-500/20">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-12 h-12 rounded-lg bg-pink-500/10 border border-pink-500/40 flex items-center justify-center text-pink-400 text-2xl group-hover:scale-110 transition">
+                            <i class="fa-solid fa-2"></i>
+                        </div>
+                        <span class="text-xs bg-pink-950 text-pink-300 px-2 py-1 rounded border border-pink-800">CLASSIC</span>
+                    </div>
+                    <h3 class="font-bold text-lg text-white mb-1 group-hover:text-pink-300">ブラックジャック</h3>
+                    <p class="text-xs text-gray-400">ディーラー Paudel Bijaya と勝負！合計『21』に近づけろ。</p>
+                </div>
+
+                <!-- Indian Poker Card -->
+                <div onclick="selectGame('indian')" class="cursor-pointer group relative bg-gray-900/80 hover:bg-gray-800 border border-yellow-500/40 hover:border-yellow-400 rounded-xl p-5 transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-yellow-500/20">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-12 h-12 rounded-lg bg-yellow-500/10 border border-yellow-500/40 flex items-center justify-center text-yellow-400 text-2xl group-hover:scale-110 transition">
+                            <i class="fa-solid fa-eye"></i>
+                        </div>
+                        <span class="text-xs bg-yellow-950 text-yellow-300 px-2 py-1 rounded border border-yellow-800">PSYCHOLOGICAL</span>
+                    </div>
+                    <h3 class="font-bold text-lg text-white mb-1 group-hover:text-yellow-300">インディアンポーカー</h3>
+                    <p class="text-xs text-gray-400">相手の額のカードを見てブラフを見破れ！心理戦の1対1勝負。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAME ARENA CONTAINER -->
+        <div id="view-arena" class="w-full max-w-3xl hidden flex flex-col items-center">
+            
+            <!-- Top Controls (Back Button & Title) -->
+            <div class="w-full flex justify-between items-center mb-4">
+                <button onclick="showMenu()" class="cyber-btn bg-gray-900 border border-gray-700 text-gray-300 px-4 py-2 rounded text-xs font-bold hover:bg-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> ロビーに戻る
+                </button>
+                <div id="arena-title" class="text-lg font-black text-cyan-400 neon-text-cyan tracking-wider">GAME TITLE</div>
+                <div id="streak-badge" class="bg-black/60 border border-cyan-500/40 text-xs px-3 py-1 rounded-full text-cyan-300 font-bold">
+                    WIN STREAK: <span id="streak-count">0</span>
+                </div>
+            </div>
+
+            <!-- Dealer / Opponent Area (Paudel Bijaya) -->
+            <div class="w-full bg-black/60 border border-gray-800 rounded-2xl p-4 md:p-6 mb-6 relative overflow-hidden backdrop-blur-md">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full border border-pink-500 overflow-hidden bg-gray-900">
+                            <img src="https://placehold.co/100x100/111827/00f0ff?text=PB" alt="Paudel Bijaya" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <div class="text-xs text-pink-400 font-bold">DEALER</div>
+                            <div class="font-black text-white text-base">Paudel Bijaya</div>
+                        </div>
+                    </div>
+
+                    <!-- Opponent Status / Message -->
+                    <div id="dealer-dialogue" class="bg-gray-900/90 border border-pink-500/30 text-pink-300 text-xs px-3 py-2 rounded-lg max-w-xs italic">
+                        「さあ、いくぞ！」
+                    </div>
+                </div>
+
+                <!-- Dealer Cards Grid -->
+                <div id="dealer-cards" class="flex justify-center gap-3 min-h-[140px] items-center">
+                    <!-- Cards injected via JS -->
+                </div>
+                <div id="dealer-score" class="text-center text-xs text-gray-400 font-bold mt-2">SCORE: <span id="dealer-score-val" class="text-white">-</span></div>
+            </div>
+
+            <!-- Central Notice Banner -->
+            <div id="message-banner" class="min-h-[40px] flex items-center justify-center my-2 text-center">
+                <div id="message-text" class="text-lg md:text-xl font-black text-yellow-400 neon-text-gold">賭け金を選択してください</div>
+            </div>
+
+            <!-- Player Area -->
+            <div class="w-full bg-black/60 border border-cyan-500/30 rounded-2xl p-4 md:p-6 mb-6 relative backdrop-blur-md">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-user text-cyan-400"></i>
+                        <span class="font-bold text-white text-sm">YOU</span>
+                    </div>
+                    <div id="player-score" class="text-xs text-cyan-400 font-bold">SCORE: <span id="player-score-val" class="text-white">0</span></div>
+                </div>
+
+                <!-- Player Cards Grid -->
+                <div id="player-cards" class="flex justify-center gap-3 min-h-[140px] items-center">
+                    <!-- Cards injected via JS -->
+                </div>
+            </div>
+
+            <!-- Control Panel (Action Buttons / Betting) -->
+            <div class="w-full bg-gray-950/80 border border-gray-800 rounded-xl p-4 flex flex-col gap-3">
+                <!-- Bet Selector -->
+                <div id="bet-controls" class="flex justify-center items-center gap-3">
+                    <span class="text-xs text-gray-400 font-bold">BET:</span>
+                    <button onclick="adjustBet(10)" class="cyber-btn bg-gray-800 border border-gray-600 px-3 py-1 rounded text-xs text-white font-bold hover:bg-gray-700">+10</button>
+                    <button onclick="adjustBet(50)" class="cyber-btn bg-gray-800 border border-gray-600 px-3 py-1 rounded text-xs text-white font-bold hover:bg-gray-700">+50</button>
+                    <button onclick="adjustBet(100)" class="cyber-btn bg-gray-800 border border-gray-600 px-3 py-1 rounded text-xs text-white font-bold hover:bg-gray-700">+100</button>
+                    <button onclick="resetBet()" class="cyber-btn bg-red-950 border border-red-800 px-2 py-1 rounded text-xs text-red-400 font-bold hover:bg-red-900">CLEAR</button>
+                    <span id="current-bet-val" class="text-sm font-black text-yellow-400 ml-2">100 CR</span>
+                </div>
+
+                <!-- Action Buttons Container -->
+                <div id="action-buttons" class="flex justify-center gap-4 mt-2">
+                    <!-- Dynamic Buttons per Game -->
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // State Management
+        let credits = 1000;
+        let currentBet = 100;
+        let winStreak = 0;
+        let currentGame = null; // 'highlow', 'blackjack', 'indian'
+        let isAudioMuted = false;
+
+        // Card Suits and Ranks Definition
+        const SUITS = [
+            { name: 'spades', symbol: '♠', color: 'text-cyan-400' },
+            { name: 'hearts', symbol: '♥', color: 'text-pink-500' },
+            { name: 'diamonds', symbol: '♦', color: 'text-pink-500' },
+            { name: 'clubs', symbol: '♣', color: 'text-cyan-400' }
+        ];
+
+        const RANKS = [
+            { name: 'A', value: 1 }, { name: '2', value: 2 }, { name: '3', value: 3 },
+            { name: '4', value: 4 }, { name: '5', value: 5 }, { name: '6', value: 6 },
+            { name: '7', value: 7 }, { name: '8', value: 8 }, { name: '9', value: 9 },
+            { name: '10', value: 10 }, { name: 'J', value: 11 }, { name: 'Q', value: 12 }, { name: 'K', value: 13 }
+        ];
+
+        let deck = [];
+        let playerHand = [];
+        let dealerHand = [];
+        let gamePhase = 'BET'; // 'BET', 'PLAYING', 'ENDED'
+
+        // Audio System (Tone.js)
+        let flipSynth, winSynth, loseSynth;
+
+        window.onload = function() {
+            initAudio();
+            updateUI();
+        };
+
+        function initAudio() {
+            try {
+                flipSynth = new Tone.Synth({
+                    oscillator: { type: 'sine' },
+                    envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 }
+                }).toDestination();
+
+                winSynth = new Tone.PolySynth(Tone.Synth).toDestination();
+                loseSynth = new Tone.MembraneSynth().toDestination();
+            } catch (e) {
+                console.log("Audio initialized on first user interaction");
+            }
+        }
+
+        function playSound(type) {
+            if (isAudioMuted) return;
+            Tone.start();
+            try {
+                if (type === 'flip') flipSynth.triggerAttackRelease('C5', '16n');
+                if (type === 'win') winSynth.triggerAttackRelease(['C4', 'E4', 'G4', 'C5'], '8n');
+                if (type === 'lose') loseSynth.triggerAttackRelease('C2', '8n');
+            } catch (e) {}
+        }
+
+        // Toggle Audio
+        document.getElementById('btn-sound').addEventListener('click', () => {
+            isAudioMuted = !isAudioMuted;
+            document.getElementById('sound-icon').className = isAudioMuted ? "fa-solid fa-volume-xmark" : "fa-solid fa-volume-high";
+        });
+
+        // Deck Helpers
+        function createDeck() {
+            deck = [];
+            for (let suit of SUITS) {
+                for (let rank of RANKS) {
+                    deck.push({ suit, rank });
+                }
+            }
+            // Shuffle
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+        }
+
+        function drawCard() {
+            if (deck.length === 0) createDeck();
+            return deck.pop();
+        }
+
+        // UI Navigation
+        function showMenu() {
+            document.getElementById('view-menu').classList.remove('hidden');
+            document.getElementById('view-arena').classList.add('hidden');
+            currentGame = null;
+        }
+
+        function selectGame(gameType) {
+            currentGame = gameType;
+            document.getElementById('view-menu').classList.add('hidden');
+            document.getElementById('view-arena').classList.remove('hidden');
+
+            const titleEl = document.getElementById('arena-title');
+            if (gameType === 'highlow') titleEl.innerText = "HIGH & LOW";
+            if (gameType === 'blackjack') titleEl.innerText = "BLACKJACK";
+            if (gameType === 'indian') titleEl.innerText = "INDIAN POKER";
+
+            resetRound();
+        }
+
+        function adjustBet(amount) {
+            if (gamePhase !== 'BET') return;
+            if (credits >= currentBet + amount) {
+                currentBet += amount;
+                updateBetDisplay();
+            }
+        }
+
+        function resetBet() {
+            if (gamePhase !== 'BET') return;
+            currentBet = 10;
+            updateBetDisplay();
+        }
+
+        function updateBetDisplay() {
+            document.getElementById('current-bet-val').innerText = `${currentBet} CR`;
+        }
+
+        function updateUI() {
+            document.getElementById('player-credits').innerText = credits.toLocaleString();
+            document.getElementById('streak-count').innerText = winStreak;
+        }
+
+        function setDialogue(text) {
+            document.getElementById('dealer-dialogue').innerText = `「${text}」`;
+        }
+
+        function setMessage(text, isWin = false) {
+            const msgEl = document.getElementById('message-text');
+            msgEl.innerText = text;
+            if (isWin) {
+                msgEl.className = "text-lg md:text-2xl font-black text-cyan-300 neon-text-cyan animate-bounce";
+            } else {
+                msgEl.className = "text-lg md:text-xl font-black text-yellow-400 neon-text-gold";
+            }
+        }
+
+        // Card Rendering Helper
+        function renderCardHTML(card, faceUp = true) {
+            if (!faceUp) {
+                return `
+                    <div class="card-container">
+                        <div class="playing-card">
+                            <div class="card-face card-back shadow-md">
+                                <i class="fa-solid fa-microchip text-white text-2xl opacity-60"></i>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+
+            return `
+                <div class="card-container">
+                    <div class="playing-card flipped">
+                        <div class="card-face card-front shadow-lg">
+                            <div class="text-left font-bold text-sm ${card.suit.color}">
+                                <div>${card.rank.name}</div>
+                                <div>${card.suit.symbol}</div>
+                            </div>
+                            <div class="text-center text-3xl ${card.suit.color}">
+                                ${card.suit.symbol}
+                            </div>
+                            <div class="text-right font-bold text-sm ${card.suit.color} rotate-180">
+                                <div>${card.rank.name}</div>
+                                <div>${card.suit.symbol}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function resetRound() {
+            createDeck();
+            playerHand = [];
+            dealerHand = [];
+            gamePhase = 'BET';
+
+            document.getElementById('player-cards').innerHTML = '';
+            document.getElementById('dealer-cards').innerHTML = '';
+            document.getElementById('player-score-val').innerText = '0';
+            document.getElementById('dealer-score-val').innerText = '-';
+
+            document.getElementById('bet-controls').style.opacity = '1';
+            setMessage("賭け金を選んで 【START】 を押してください");
+
+            setDialogue("準備はいいか？勝負しよう！");
+            renderActionButtons();
+        }
+
+        function renderActionButtons() {
+            const container = document.getElementById('action-buttons');
+            container.innerHTML = '';
+
+            if (gamePhase === 'BET') {
+                container.innerHTML = `
+                    <button onclick="startGameRound()" class="cyber-btn bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-extrabold px-8 py-3 rounded-lg text-sm neon-glow-cyan">
+                        START GAME
+                    </button>`;
+                return;
+            }
+
+            if (currentGame === 'highlow' && gamePhase === 'PLAYING') {
+                container.innerHTML = `
+                    <button onclick="playHighLow('HIGH')" class="cyber-btn bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-6 py-2.5 rounded-lg text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-up"></i> HIGH (高い)
+                    </button>
+                    <button onclick="playHighLow('LOW')" class="cyber-btn bg-pink-600 hover:bg-pink-500 text-white font-bold px-6 py-2.5 rounded-lg text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-down"></i> LOW (低い)
+                    </button>`;
+            }
+
+            if (currentGame === 'blackjack' && gamePhase === 'PLAYING') {
+                container.innerHTML = `
+                    <button onclick="blackjackHit()" class="cyber-btn bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-6 py-2.5 rounded-lg text-sm">
+                        HIT (引く)
+                    </button>
+                    <button onclick="blackjackStand()" class="cyber-btn bg-pink-600 hover:bg-pink-500 text-white font-bold px-6 py-2.5 rounded-lg text-sm">
+                        STAND (勝負)
+                    </button>`;
+            }
+
+            if (currentGame === 'indian' && gamePhase === 'PLAYING') {
+                container.innerHTML = `
+                    <button onclick="indianCall()" class="cyber-btn bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold px-6 py-2.5 rounded-lg text-sm">
+                        CALL (勝負する)
+                    </button>
+                    <button onclick="indianFold()" class="cyber-btn bg-gray-700 hover:bg-gray-600 text-white font-bold px-6 py-2.5 rounded-lg text-sm">
+                        FOLD (降りる)
+                    </button>`;
+            }
+
+            if (gamePhase === 'ENDED') {
+                container.innerHTML = `
+                    <button onclick="resetRound()" class="cyber-btn bg-gradient-to-r from-cyan-500 to-pink-500 text-white font-extrabold px-8 py-3 rounded-lg text-sm neon-glow-cyan">
+                        NEXT ROUND
+                    </button>`;
+            }
+        }
+
+        function startGameRound() {
+            if (credits < currentBet) {
+                setMessage("クレジットが不足しています！");
+                return;
+            }
+
+            credits -= currentBet;
+            updateUI();
+            gamePhase = 'PLAYING';
+            document.getElementById('bet-controls').style.opacity = '0.4';
+            playSound('flip');
+
+            if (currentGame === 'highlow') {
+                // Dealer gets initial visible card
+                dealerHand.push(drawCard());
+                // Player card remains facedown until guessed
+                playerHand.push(drawCard());
+
+                document.getElementById('dealer-cards').innerHTML = renderCardHTML(dealerHand[0], true);
+                document.getElementById('player-cards').innerHTML = renderCardHTML(playerHand[0], false);
+                document.getElementById('dealer-score-val').innerText = dealerHand[0].rank.value;
+
+                setMessage("伏せられたカードは HIGH か LOW か？");
+                setDialogue("見破れるかな？");
+            }
+
+            if (currentGame === 'blackjack') {
+                playerHand.push(drawCard(), drawCard());
+                dealerHand.push(drawCard(), drawCard());
+
+                renderBlackjackHands(false);
+                setMessage("HIT か STAND を選択してください");
+                setDialogue("ブラックジャックで勝負だ！");
+
+                // Check natural blackjack
+                if (calculateBJScore(playerHand) === 21) {
+                    blackjackStand();
+                }
+            }
+
+            if (currentGame === 'indian') {
+                playerHand.push(drawCard());
+                dealerHand.push(drawCard());
+
+                // Player ONLY sees Dealer's card!
+                document.getElementById('dealer-cards').innerHTML = renderCardHTML(dealerHand[0], true);
+                document.getElementById('player-cards').innerHTML = renderCardHTML(playerHand[0], false);
+                document.getElementById('dealer-score-val').innerText = dealerHand[0].rank.value;
+
+                // Dealer commentary based on player card
+                const pVal = playerHand[0].rank.value;
+                if (pVal > 10) setDialogue("ほう…いいカードを持っていそうだな？");
+                else if (pVal < 4) setDialogue("ふふっ、強気でこれるかな？");
+                else setDialogue("どう出る？勝負するか？");
+
+                setMessage("相手のカードを見て勝負(CALL)するか降参(FOLD)するか決定！");
+            }
+
+            renderActionButtons();
+        }
+
+        // --- GAME 1: HIGH & LOW ---
+        function playHighLow(choice) {
+            playSound('flip');
+            gamePhase = 'ENDED';
+
+            const dealerVal = dealerHand[0].rank.value;
+            const playerVal = playerHand[0].rank.value;
+
+            document.getElementById('player-cards').innerHTML = renderCardHTML(playerHand[0], true);
+            document.getElementById('player-score-val').innerText = playerVal;
+
+            let isWin = false;
+            if (choice === 'HIGH' && playerVal >= dealerVal) isWin = true;
+            if (choice === 'LOW' && playerVal <= dealerVal) isWin = true;
+
+            if (isWin) {
+                const winAmount = currentBet * 2;
+                credits += winAmount;
+                winStreak++;
+                playSound('win');
+                setMessage(`正解！ +${winAmount} CR 獲得！`, true);
+                setDialogue("見事だ！君の勝ちだよ。");
+            } else {
+                winStreak = 0;
+                playSound('lose');
+                setMessage("残念！不的中…");
+                setDialogue("私の勝ちだな。次も挑戦してくれ！");
+            }
+
+            updateUI();
+            renderActionButtons();
+        }
+
+        // --- GAME 2: BLACKJACK ---
+        function calculateBJScore(hand) {
+            let score = 0;
+            let aces = 0;
+            for (let c of hand) {
+                if (c.rank.value === 1) {
+                    aces++;
+                    score += 11;
+                } else if (c.rank.value >= 10) {
+                    score += 10;
+                } else {
+                    score += c.rank.value;
+                }
+            }
+            while (score > 21 && aces > 0) {
+                score -= 10;
+                aces--;
+            }
+            return score;
+        }
+
+        function renderBlackjackHands(revealDealer = false) {
+            const dContainer = document.getElementById('dealer-cards');
+            const pContainer = document.getElementById('player-cards');
+
+            dContainer.innerHTML = dealerHand.map((card, idx) => {
+                return renderCardHTML(card, revealDealer || idx === 0);
+            }).join('');
+
+            pContainer.innerHTML = playerHand.map(card => renderCardHTML(card, true)).join('');
+
+            const pScore = calculateBJScore(playerHand);
+            document.getElementById('player-score-val').innerText = pScore;
+
+            if (revealDealer) {
+                document.getElementById('dealer-score-val').innerText = calculateBJScore(dealerHand);
+            } else {
+                document.getElementById('dealer-score-val').innerText = '?';
+            }
+        }
+
+        function blackjackHit() {
+            playSound('flip');
+            playerHand.push(drawCard());
+            renderBlackjackHands(false);
+
+            if (calculateBJScore(playerHand) > 21) {
+                // Bust
+                gamePhase = 'ENDED';
+                playSound('lose');
+                winStreak = 0;
+                setMessage("バースト！21を超えました。");
+                setDialogue("欲張りすぎたようだね！");
+                renderActionButtons();
+                updateUI();
+            }
+        }
+
+        function blackjackStand() {
+            playSound('flip');
+            gamePhase = 'ENDED';
+
+            // Dealer AI plays
+            while (calculateBJScore(dealerHand) < 17) {
+                dealerHand.push(drawCard());
+            }
+
+            renderBlackjackHands(true);
+
+            const pScore = calculateBJScore(playerHand);
+            const dScore = calculateBJScore(dealerHand);
+
+            if (dScore > 21 || pScore > dScore) {
+                const winAmount = currentBet * 2;
+                credits += winAmount;
+                winStreak++;
+                playSound('win');
+                setMessage(`WIN!! +${winAmount} CR 獲得！`, true);
+                setDialogue("参った、見事なプレイだ！");
+            } else if (pScore === dScore) {
+                credits += currentBet;
+                setMessage("DRAW (引き分け)");
+                setDialogue("いい勝負だった。引き分けだな。");
+            } else {
+                winStreak = 0;
+                playSound('lose');
+                setMessage("LOSE... ディーラーの勝ち");
+                setDialogue("21の勝負は私の勝ちだ！");
+            }
+
+            updateUI();
+            renderActionButtons();
+        }
+
+        // --- GAME 3: INDIAN POKER ---
+        function indianCall() {
+            playSound('flip');
+            gamePhase = 'ENDED';
+
+            document.getElementById('player-cards').innerHTML = renderCardHTML(playerHand[0], true);
+            document.getElementById('player-score-val').innerText = playerHand[0].rank.value;
+
+            const pVal = playerHand[0].rank.value;
+            const dVal = dealerHand[0].rank.value;
+
+            if (pVal > dVal) {
+                const winAmount = currentBet * 2;
+                credits += winAmount;
+                winStreak++;
+                playSound('win');
+                setMessage(`CALL成功！ +${winAmount} CR 獲得！`, true);
+                setDialogue("うぐっ、強気なブラフだと思ったのに！");
+            } else if (pVal === dVal) {
+                credits += currentBet;
+                setMessage("引き分け！賭け金返還");
+                setDialogue("同じ強さのカードか！");
+            } else {
+                winStreak = 0;
+                playSound('lose');
+                setMessage("CALL失敗… 相手の方が強かった！");
+                setDialogue("見破ったぞ！私のカードの方が上だ。");
+            }
+
+            updateUI();
+            renderActionButtons();
+        }
+
+        function indianFold() {
+            gamePhase = 'ENDED';
+            playSound('lose');
+
+            document.getElementById('player-cards').innerHTML = renderCardHTML(playerHand[0], true);
+            document.getElementById('player-score-val').innerText = playerHand[0].rank.value;
+
+            const refund = Math.floor(currentBet * 0.5);
+            credits += refund;
+
+            setMessage(`FOLD (降り)。賭け金の半分 (${refund} CR) 返還`);
+            setDialogue("賢明な判断だ。命拾いしたな！");
+
+            updateUI();
+            renderActionButtons();
+        }
+    </script>
+</body>
+</html>
